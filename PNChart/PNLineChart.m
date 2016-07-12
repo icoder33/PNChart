@@ -17,15 +17,20 @@
 
 @property(nonatomic) NSMutableArray *chartLineArray;  // Array[CAShapeLayer]
 @property(nonatomic) NSMutableArray *chartPointArray; // Array[CAShapeLayer] save the point layer
+@property (nonatomic, strong) NSMutableArray *chartScopeArray; // Array[CAShapeLayer], 保存范围CAShapeLayer
+@property (nonatomic, strong) CAShapeLayer *xGridLinesShapeLayer; // x轴的分割线用的CAShapeLayer
 
 @property(nonatomic) NSMutableArray *chartPath;       // Array of line path, one for each line.
 @property(nonatomic) NSMutableArray *pointPath;       // Array of point path, one for each line
 @property(nonatomic) NSMutableArray *endPointsOfPath;      // Array of start and end points of each line path, one for each line
+@property (nonatomic, strong) NSMutableArray *scopePathArray; // 范围路径的数组
 
 @property(nonatomic) CABasicAnimation *pathAnimation; // will be set to nil if _displayAnimation is NO
 
 // display grade
 @property(nonatomic) NSMutableArray *gradeStringPaths;
+
+@property (nonatomic, strong) UIScrollView *scrollView;
 
 @end
 
@@ -50,6 +55,12 @@
 
     if (self) {
         [self setupDefaultValues];
+        
+        self.isXAxisScrollable = YES;
+        self.scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(40, 0, frame.size.width, frame.size.height)];
+        self.scrollView.showsHorizontalScrollIndicator = NO;
+        self.scrollView.contentSize = CGSizeMake(frame.size.width + 100, frame.size.height);
+        [self addSubview:self.scrollView];
     }
 
     return self;
@@ -302,21 +313,40 @@
 #pragma mark - Draw Chart
 
 - (void)strokeChart {
+    // 线的贝塞尔曲线数组
     _chartPath = [[NSMutableArray alloc] init];
+    // 转折点贝塞尔曲线数组
     _pointPath = [[NSMutableArray alloc] init];
+    // 转折点上的文字layer数组
     _gradeStringPaths = [NSMutableArray array];
+    // 范围路径数组
+    self.scopePathArray = [NSMutableArray array];
 
-    [self calculateChartPath:_chartPath andPointsPath:_pointPath andPathKeyPoints:_pathPoints andPathStartEndPoints:_endPointsOfPath];
+    // 图表元素存到数组里
+    [self calculateChartPath:_chartPath
+               andPointsPath:_pointPath
+            andPathKeyPoints:_pathPoints
+       andPathStartEndPoints:_endPointsOfPath
+                   scopePath:self.scopePathArray];
+    
     // Draw each line
+    // 用
     for (NSUInteger lineIndex = 0; lineIndex < self.chartData.count; lineIndex++) {
         PNLineChartData *chartData = self.chartData[lineIndex];
+        // 线
         CAShapeLayer *chartLine = (CAShapeLayer *) self.chartLineArray[lineIndex];
+        // 点
         CAShapeLayer *pointLayer = (CAShapeLayer *) self.chartPointArray[lineIndex];
+        // 范围CAShapeLayer
+        CAShapeLayer *scopeShapeLayer = (CAShapeLayer *)self.chartScopeArray[lineIndex];
+        
         UIGraphicsBeginImageContext(self.frame.size);
         // setup the color of the chart line
         if (chartData.color) {
+            // 线的颜色
             chartLine.strokeColor = [[chartData.color colorWithAlphaComponent:chartData.alpha] CGColor];
             if (chartData.inflexionPointColor) {
+                // 点的颜色
                 pointLayer.strokeColor = [[chartData.inflexionPointColor
                         colorWithAlphaComponent:chartData.alpha] CGColor];
             }
@@ -327,13 +357,19 @@
 
         UIBezierPath *progressline = [_chartPath objectAtIndex:lineIndex];
         UIBezierPath *pointPath = [_pointPath objectAtIndex:lineIndex];
+        // 范围路径
+        UIBezierPath *scopePath = self.scopePathArray[lineIndex];
 
+        // https://zsisme.gitbooks.io/ios-/content/chapter6/cashapelayer.html
+        // 用CGPath来定义想要绘制的图形，最后CAShapeLayer就自动渲染出来了
         chartLine.path = progressline.CGPath;
         pointLayer.path = pointPath.CGPath;
+        scopeShapeLayer.path = scopePath.CGPath;
 
         [CATransaction begin];
-
+ 
         [chartLine addAnimation:self.pathAnimation forKey:@"strokeEndAnimation"];
+        // strokeEnd这个属性的值范围是0-1，动画显示了从0到1之间每一个值对这条曲线的影响
         chartLine.strokeEnd = 1.0;
 
         // if you want cancel the point animation, conment this code, the point will show immediately
@@ -353,23 +389,29 @@
     }
 }
 
-
-- (void)calculateChartPath:(NSMutableArray *)chartPath andPointsPath:(NSMutableArray *)pointsPath andPathKeyPoints:(NSMutableArray *)pathPoints andPathStartEndPoints:(NSMutableArray *)pointsOfPath {
-
+- (void)calculateChartPath:(NSMutableArray *)chartPath
+             andPointsPath:(NSMutableArray *)pointsPath
+          andPathKeyPoints:(NSMutableArray *)pathPoints
+     andPathStartEndPoints:(NSMutableArray *)pointsOfPath
+                 scopePath:(NSMutableArray *)scopePathArray
+{
     // Draw each line
     for (NSUInteger lineIndex = 0; lineIndex < self.chartData.count; lineIndex++) {
         PNLineChartData *chartData = self.chartData[lineIndex];
 
         CGFloat yValue;
         CGFloat innerGrade;
-
+        // 线贝塞尔曲线
         UIBezierPath *progressline = [UIBezierPath bezierPath];
-
+        // 转折点贝塞尔曲线
         UIBezierPath *pointPath = [UIBezierPath bezierPath];
+        // 范围贝塞尔曲线
+        UIBezierPath *scopePath = [UIBezierPath bezierPath];
 
 
         [chartPath insertObject:progressline atIndex:lineIndex];
         [pointsPath insertObject:pointPath atIndex:lineIndex];
+        [scopePathArray insertObject:scopePath atIndex:lineIndex];
 
 
         NSMutableArray *gradePathArray = [NSMutableArray array];
@@ -405,7 +447,7 @@
                 [pointPath moveToPoint:CGPointMake(circleCenter.x + (inflexionWidth / 2), circleCenter.y)];
                 [pointPath addArcWithCenter:circleCenter radius:inflexionWidth / 2 startAngle:0 endAngle:2 * M_PI clockwise:YES];
 
-                //jet text display text
+                //jet text display text 圆点上的文字
                 if (chartData.showPointLabel) {
                     [gradePathArray addObject:[self createPointLabelFor:chartData.getData(i).rawY pointCenter:circleCenter width:inflexionWidth withChartData:chartData]];
                 }
@@ -494,6 +536,16 @@
             last_x = x;
             last_y = y;
         }
+        
+        // 绘制范围路径
+        [scopePath moveToPoint:CGPointMake(20, 20)];
+        [scopePath addLineToPoint:CGPointMake(self.frame.size.width - 40, 20)];
+        [scopePath addLineToPoint:CGPointMake(self.frame.size.width / 2, self.frame.size.height - 20)];
+        [scopePath closePath];
+
+        // 设置画笔颜色
+        UIColor *strokeColor = [UIColor blueColor];
+        [strokeColor set];
 
         if (self.showSmoothLines && chartData.itemCount >= 4) {
             [progressline moveToPoint:[progrssLinePaths[0][@"from"] CGPointValue]];
@@ -536,11 +588,28 @@
         for (CALayer *layer in self.chartPointArray) {
             [layer removeFromSuperlayer];
         }
+        for (CALayer *layer in self.chartScopeArray) {
+            [layer removeFromSuperlayer];
+        }
 
         self.chartLineArray = [NSMutableArray arrayWithCapacity:data.count];
         self.chartPointArray = [NSMutableArray arrayWithCapacity:data.count];
 
         for (PNLineChartData *chartData in data) {
+            // 创建范围CAShapeLayer
+            CAShapeLayer *scopeShapeLayer = [CAShapeLayer layer];
+            scopeShapeLayer.fillColor = [UIColor colorWithRed:1 green:0 blue:0 alpha:0.1].CGColor;
+            scopeShapeLayer.lineCap = kCALineCapButt;
+            scopeShapeLayer.lineJoin = kCALineJoinBevel;
+            
+            if (self.isXAxisScrollable) {
+                [self.scrollView.layer addSublayer:scopeShapeLayer];
+            } else {
+                [self.layer addSublayer:scopeShapeLayer];
+            }
+            
+            [self.chartScopeArray addObject:scopeShapeLayer];
+            
             // create as many chart line layers as there are data-lines
             CAShapeLayer *chartLine = [CAShapeLayer layer];
             chartLine.lineCap = kCALineCapButt;
@@ -548,7 +617,13 @@
             chartLine.fillColor = [[UIColor whiteColor] CGColor];
             chartLine.lineWidth = chartData.lineWidth;
             chartLine.strokeEnd = 0.0;
-            [self.layer addSublayer:chartLine];
+            
+            if (self.isXAxisScrollable) {
+                [self.scrollView.layer addSublayer:chartLine];
+            } else {
+                [self.layer addSublayer:chartLine];
+            }
+            
             [self.chartLineArray addObject:chartLine];
 
             // create point
@@ -558,7 +633,13 @@
             pointLayer.lineJoin = kCALineJoinBevel;
             pointLayer.fillColor = nil;
             pointLayer.lineWidth = chartData.lineWidth;
-            [self.layer addSublayer:pointLayer];
+            
+            if (self.isXAxisScrollable) {
+                [self.scrollView.layer addSublayer:pointLayer];
+            } else {
+                [self.layer addSublayer:pointLayer];
+            }
+            
             [self.chartPointArray addObject:pointLayer];
         }
 
@@ -590,6 +671,7 @@
         for (NSUInteger i = 0; i < chartData.itemCount; i++) {
             CGFloat yValue = chartData.getData(i).y;
             [yLabelsArray addObject:[NSString stringWithFormat:@"%2f", yValue]];
+            // 返回参数的最大数值
             yMax = fmaxf(yMax, yValue);
             yMin = fminf(yMin, yValue);
         }
@@ -617,7 +699,11 @@
 
     [self prepareYLabelsWithData:data];
 
-    [self calculateChartPath:_chartPath andPointsPath:_pointPath andPathKeyPoints:_pathPoints andPathStartEndPoints:_endPointsOfPath];
+    [self calculateChartPath:_chartPath
+               andPointsPath:_pointPath
+            andPathKeyPoints:_pathPoints
+       andPathStartEndPoints:_endPointsOfPath
+     scopePath:self.scopePathArray];
 
     for (NSUInteger lineIndex = 0; lineIndex < self.chartData.count; lineIndex++) {
 
@@ -723,6 +809,7 @@
             [self drawTextInContext:ctx text:self.xUnit inRect:drawRect font:font];
         }
     }
+    // 画y轴分割线
     if (self.showYGridLines) {
         CGContextRef ctx = UIGraphicsGetCurrentContext();
         CGFloat yAxisOffset = _showLabel ? 10.f : 0.0f;
@@ -758,6 +845,7 @@
     self.backgroundColor = [UIColor whiteColor];
     self.clipsToBounds = YES;
     self.chartLineArray = [NSMutableArray new];
+    self.chartScopeArray = [NSMutableArray new];
     _showLabel = YES;
     _showGenYLabels = YES;
     _pathPoints = [[NSMutableArray alloc] init];

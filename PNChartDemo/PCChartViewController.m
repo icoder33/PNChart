@@ -36,13 +36,18 @@
 
         // added an examle to show how yGridLines can be enabled
         // the color is set to clearColor so that the demo remains the same
-        self.lineChart.yGridLinesColor = [UIColor clearColor];
+        self.lineChart.yGridLinesColor = [UIColor redColor];
         self.lineChart.showYGridLines = YES;
         
         //Use yFixedValueMax and yFixedValueMin to Fix the Max and Min Y Value
         //Only if you needed
         self.lineChart.yFixedValueMax = 300.0;
         self.lineChart.yFixedValueMin = 0.0;
+        
+        // 自己定义的
+        // 是否显示y轴的值
+        self.lineChart.showLabel = YES;
+        self.lineChart.showSmoothLines = YES;
 
         [self.lineChart setYLabels:@[
             @"0 min",

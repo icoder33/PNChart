@@ -45,16 +45,24 @@
 @property (nonatomic) UIColor *yLabelColor;
 @property (nonatomic) CGFloat chartCavanHeight;
 @property (nonatomic) CGFloat chartCavanWidth;
+// 是否显示y轴的值
 @property (nonatomic) BOOL showLabel;
 @property (nonatomic) BOOL showGenYLabels;
 @property (nonatomic) BOOL showYGridLines;
 @property (nonatomic) UIColor *yGridLinesColor;
 @property (nonatomic) BOOL thousandsSeparator;
 
+// 是否显示x轴的分割线即竖直分割线
+@property (nonatomic) BOOL showXGridLines;
+@property (nonatomic, strong) UIColor *xGridLinesColor;
+
 @property (nonatomic) CGFloat chartMarginLeft;
 @property (nonatomic) CGFloat chartMarginRight;
 @property (nonatomic) CGFloat chartMarginTop;
 @property (nonatomic) CGFloat chartMarginBottom;
+
+// x轴是否可以滚动
+@property (nonatomic) BOOL isXAxisScrollable;
 
 /**
  * Controls whether to show the coordinate axis. Default is NO.
