@@ -25,6 +25,12 @@
     return [[PNLineChartDataItem alloc] initWithY:y andRawY:rawY];
 }
 
++ (PNLineChartDataItem *)dateItemWithMinY:(CGFloat)minY
+                                  andMaxY:(CGFloat)maxY
+{
+    return [[PNLineChartDataItem alloc] initWithMinY:minY andMaxY:maxY];
+}
+
 - (id)initWithY:(CGFloat)y andRawY:(CGFloat)rawY
 {
     if ((self = [super init])) {
@@ -32,6 +38,18 @@
         self.rawY = rawY;
     }
 
+    return self;
+}
+
+- (instancetype)initWithMinY:(CGFloat)minY andMaxY:(CGFloat)maxY
+{
+    self = [super init];
+    
+    if (self) {
+        self.minY = minY;
+        self.maxY = maxY;
+    }
+    
     return self;
 }
 

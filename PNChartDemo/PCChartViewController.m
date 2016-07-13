@@ -48,6 +48,9 @@
         // 是否显示y轴的值
         self.lineChart.showLabel = YES;
         self.lineChart.showSmoothLines = YES;
+        self.lineChart.showXGridLines = YES;
+        self.lineChart.fixedXIndicatorLine = 137;
+
 
         [self.lineChart setYLabels:@[
             @"0 min",
@@ -86,8 +89,28 @@
             CGFloat yValue = [data02Array[index] floatValue];
             return [PNLineChartDataItem dataItemWithY:yValue];
         };
+        
+        // 范围数据
+        NSDictionary *dict1 = @{@"minY": @10,
+                                @"maxY": @40};
+        NSDictionary *dict2 = @{@"minY": @80,
+                                @"maxY": @120};
+        NSDictionary *dict3 = @{@"minY": @100,
+                                @"maxY": @160};
+        NSDictionary *dict4 = @{@"minY": @160,
+                                @"maxY": @180};
+        
+                                
+        NSArray *scope2Array = @[dict1, dict2, dict3, dict4];
+        data02.scopeCount = scope2Array.count;
+        data02.getScope = ^(NSUInteger index) {
+            NSDictionary *dict = scope2Array[index];
+            CGFloat minY = [dict[@"minY"] doubleValue];
+            CGFloat maxY = [dict[@"maxY"] doubleValue];
+            return [PNLineChartDataItem dateItemWithMinY:minY andMaxY:maxY];
+        };
 
-        self.lineChart.chartData = @[data01, data02];
+        self.lineChart.chartData = @[data02];
         [self.lineChart strokeChart];
         self.lineChart.delegate = self;
         

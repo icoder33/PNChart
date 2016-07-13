@@ -23,6 +23,10 @@ typedef PNLineChartDataItem *(^LCLineChartDataGetter)(NSUInteger item);
 @property (nonatomic) CGFloat alpha;
 @property NSUInteger itemCount;
 @property (copy) LCLineChartDataGetter getData;
+// 得到范围的block
+@property (nonatomic, copy) LCLineChartDataGetter getScope;
+// 范围数据个数，最小和最大为一个数据
+@property (nonatomic) NSUInteger scopeCount;
 @property (strong, nonatomic) NSString *dataTitle;
 
 @property (nonatomic) BOOL showPointLabel;

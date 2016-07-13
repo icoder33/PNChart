@@ -119,6 +119,8 @@
 
 - (void)setYLabels:(NSArray *)yLabels {
     _showGenYLabels = NO;
+    
+    //y轴数据个数减1
     _yLabelNum = yLabels.count - 1;
 
     CGFloat yLabelHeight;
@@ -145,6 +147,7 @@
     NSString *labelText;
 
     if (_showLabel) {
+        // y轴每个刻度之间的间距
         CGFloat yStepHeight = _chartCavanHeight / _yLabelNum;
 
         for (int index = 0; index < yLabels.count; index++) {
@@ -211,7 +214,12 @@
             [label setTextAlignment:NSTextAlignmentCenter];
             label.text = labelText;
             [self setCustomStyleForXLabel:label];
-            [self addSubview:label];
+            if (self.isXAxisScrollable) {
+                [self.scrollView addSubview:label];
+            } else {
+                [self addSubview:label];
+            }
+            
             [_xChartLabels addObject:label];
         }
     }
@@ -384,6 +392,23 @@
             CABasicAnimation *fadeAnimation = [self fadeAnimation];
             [textLayer addAnimation:fadeAnimation forKey:nil];
         }
+        
+        if (self.fixedXIndicatorLine) {
+            CAShapeLayer *xGridLineShapeLayer = [CAShapeLayer layer];
+            xGridLineShapeLayer.lineCap = kCALineCapButt;
+            xGridLineShapeLayer.lineJoin = kCALineJoinMiter;
+            xGridLineShapeLayer.lineWidth = 0.5;
+            xGridLineShapeLayer.lineDashPhase = 6;
+            xGridLineShapeLayer.lineDashPattern = @[@6, @5];
+            xGridLineShapeLayer.strokeColor = [UIColor greenColor].CGColor;
+            [self.scrollView.layer addSublayer:xGridLineShapeLayer];
+            
+            UIBezierPath *xGridLinePath = [UIBezierPath bezierPath];
+            CGPoint point = CGPointMake(self.fixedXIndicatorLine, self.chartMarginBottom + self.chartCavanHeight);
+            [xGridLinePath moveToPoint:point];
+            [xGridLinePath addLineToPoint:CGPointMake(point.x, 0)];
+            xGridLineShapeLayer.path = xGridLinePath.CGPath;
+        }
 
         UIGraphicsEndImageContext();
     }
@@ -452,6 +477,7 @@
                     [gradePathArray addObject:[self createPointLabelFor:chartData.getData(i).rawY pointCenter:circleCenter width:inflexionWidth withChartData:chartData]];
                 }
 
+                // 从第二个点开始算
                 if (i > 0) {
 
                     // calculate the point for line
@@ -532,16 +558,67 @@
                             @"to" : [NSValue valueWithCGPoint:CGPointMake(x, y)]}];
                 }
             }
+            
             [linePointsArray addObject:[NSValue valueWithCGPoint:CGPointMake(x, y)]];
             last_x = x;
             last_y = y;
         }
         
         // 绘制范围路径
-        [scopePath moveToPoint:CGPointMake(20, 20)];
-        [scopePath addLineToPoint:CGPointMake(self.frame.size.width - 40, 20)];
-        [scopePath addLineToPoint:CGPointMake(self.frame.size.width / 2, self.frame.size.height - 20)];
-        [scopePath closePath];
+        NSMutableArray *minYArray = [NSMutableArray array];
+        NSMutableArray *maxYArray = [NSMutableArray array];
+        for (NSUInteger i = 0; i < chartData.scopeCount; i++) {
+            PNLineChartDataItem *dataItem = chartData.getScope(i);
+            NSNumber *minY = @(dataItem.minY);
+            NSNumber *maxY = @(dataItem.maxY);
+            [minYArray addObject:minY];
+            [maxYArray addObject:maxY];
+        }
+        
+        CGFloat scopeInnerGrade;
+        CGFloat scopeYValue;
+        CGPoint originPoint;
+        for (NSUInteger i = 0; i < minYArray.count; i++) {
+            scopeYValue = [minYArray[i] doubleValue];
+            if (!(_yValueMax - _yValueMin)) {
+                scopeInnerGrade = 0.5;
+            } else {
+                scopeInnerGrade = (scopeYValue - _yValueMin) / (_yValueMax - _yValueMin);
+            }
+            
+            int x = i * _xLabelWidth + _chartMarginLeft + _xLabelWidth / 2.0;
+            int y = _chartCavanHeight - (scopeInnerGrade * _chartCavanHeight) + (_yLabelHeight / 2) + _chartMarginTop - _chartMarginBottom;
+            if (i == 0) {
+                [scopePath moveToPoint:CGPointMake(x, y)];
+                originPoint = CGPointMake(x, y);
+            } else {
+                [scopePath addLineToPoint:CGPointMake(x, y)];
+            }
+        }
+        
+        for (NSInteger i = (maxYArray.count - 1); i >= 0; i--) {
+            scopeYValue = [maxYArray[i] doubleValue];
+            if (!(_yValueMax - _yValueMin)) {
+                scopeInnerGrade = 0.5;
+            } else {
+                scopeInnerGrade = (scopeYValue - _yValueMin) / (_yValueMax - _yValueMin);
+            }
+            
+            int x = i * _xLabelWidth + _chartMarginLeft + _xLabelWidth / 2.0;
+            int y = _chartCavanHeight - (scopeInnerGrade * _chartCavanHeight) + (_yLabelHeight / 2) + _chartMarginTop - _chartMarginBottom;
+            
+            if (i == 0) {
+                [scopePath addLineToPoint:originPoint];
+            } else {
+                [scopePath addLineToPoint:CGPointMake(x, y)];
+            }
+        }
+        
+        
+//        [scopePath moveToPoint:CGPointMake(20, 20)];
+//        [scopePath addLineToPoint:CGPointMake(self.frame.size.width - 40, 20)];
+//        [scopePath addLineToPoint:CGPointMake(self.frame.size.width / 2, self.frame.size.height - 20)];
+//        [scopePath closePath];
 
         // 设置画笔颜色
         UIColor *strokeColor = [UIColor blueColor];
@@ -751,7 +828,9 @@
         CGContextSetLineWidth(ctx, self.axisWidth);
         CGContextSetStrokeColorWithColor(ctx, [self.axisColor CGColor]);
 
+        // x轴的宽度
         CGFloat xAxisWidth = CGRectGetWidth(rect) - (_chartMarginLeft + _chartMarginRight) / 2;
+        // y轴的高度
         CGFloat yAxisHeight = _chartMarginBottom + _chartCavanHeight;
 
         // draw coordinate axis
@@ -812,6 +891,7 @@
     // 画y轴分割线
     if (self.showYGridLines) {
         CGContextRef ctx = UIGraphicsGetCurrentContext();
+        // y轴分割线的x坐标向右偏移的大小
         CGFloat yAxisOffset = _showLabel ? 10.f : 0.0f;
         CGPoint point;
         CGFloat yStepHeight = _chartCavanHeight / _yLabelNum;
@@ -824,13 +904,34 @@
             point = CGPointMake(_chartMarginLeft + yAxisOffset, (_chartCavanHeight - i * yStepHeight + _yLabelHeight / 2));
             CGContextMoveToPoint(ctx, point.x, point.y);
             // add dotted style grid
-            CGFloat dash[] = {6, 5};
+            if (self.isYGridLinesDash) {
+                CGFloat dash[] = {6, 5};
+                CGContextSetLineDash(ctx, 0.0, dash, 2);
+            }
+            
             // dot diameter is 20 points
             CGContextSetLineWidth(ctx, 0.5);
             CGContextSetLineCap(ctx, kCGLineCapRound);
-            CGContextSetLineDash(ctx, 0.0, dash, 2);
             CGContextAddLineToPoint(ctx, CGRectGetWidth(rect) - _chartMarginLeft + 5, point.y);
             CGContextStrokePath(ctx);
+        }
+    }
+    
+    // 画x轴上的分割线
+    if (self.showXGridLines) {
+        for (NSUInteger i = 0; i < self.xLabels.count; i++) {
+            CAShapeLayer *xGridLineShapeLayer = [CAShapeLayer layer];
+            xGridLineShapeLayer.lineCap = kCALineCapButt;
+            xGridLineShapeLayer.lineJoin = kCALineJoinBevel;
+            xGridLineShapeLayer.lineWidth = 0.5;
+            xGridLineShapeLayer.strokeColor = [UIColor redColor].CGColor;
+            [self.scrollView.layer addSublayer:xGridLineShapeLayer];
+            
+            UIBezierPath *xGridLinePath = [UIBezierPath bezierPath];
+            CGPoint point = CGPointMake(2 * self.chartMarginLeft + (i * self.xLabelWidth), self.chartMarginBottom + self.chartCavanHeight);
+            [xGridLinePath moveToPoint:point];
+            [xGridLinePath addLineToPoint:CGPointMake(point.x, 0)];
+            xGridLineShapeLayer.path = xGridLinePath.CGPath;
         }
     }
 
@@ -866,7 +967,9 @@
 
     _yLabelFormat = @"%1.f";
 
+    // 图表去除左右两边间距的宽
     _chartCavanWidth = self.frame.size.width - _chartMarginLeft - _chartMarginRight;
+    // 图表去除上下间距的高
     _chartCavanHeight = self.frame.size.height - _chartMarginBottom - _chartMarginTop;
 
     // Coordinate Axis Default Values
@@ -876,7 +979,6 @@
 
     // do not create curved line chart by default
     _showSmoothLines = NO;
-
 }
 
 #pragma mark - tools
