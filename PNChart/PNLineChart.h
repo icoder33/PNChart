@@ -35,6 +35,11 @@
 @property (nonatomic) CGFloat xLabelWidth;
 @property (nonatomic) UIFont *xLabelFont;
 @property (nonatomic) UIColor *xLabelColor;
+// 是否显示x轴的箭头
+@property (nonatomic) BOOL showXAxisArrow;
+// 是否显示x轴的刻度点
+@property (nonatomic) BOOL showXAxisSeparator;
+
 @property (nonatomic) CGFloat yValueMax;
 @property (nonatomic) CGFloat yFixedValueMax;
 @property (nonatomic) CGFloat yFixedValueMin;
@@ -43,7 +48,13 @@
 @property (nonatomic) CGFloat yLabelHeight;
 @property (nonatomic) UIFont *yLabelFont;
 @property (nonatomic) UIColor *yLabelColor;
+// 是否显示y轴的箭头
+@property (nonatomic) BOOL showYAxisArrow;
+// 是否显示y轴的刻度点
+@property (nonatomic) BOOL showYAxisSeparator;
+// 图表本身高，即y轴的高度
 @property (nonatomic) CGFloat chartCavanHeight;
+// 图表本身宽，即x轴的宽度
 @property (nonatomic) CGFloat chartCavanWidth;
 // 是否显示y轴的值
 @property (nonatomic) BOOL showLabel;
@@ -62,11 +73,8 @@
 
 @property (nonatomic) CGFloat chartMarginLeft;
 @property (nonatomic) CGFloat chartMarginRight;
-@property (nonatomic) CGFloat chartMarginTop;
+//@property (nonatomic) CGFloat chartMarginTop;
 @property (nonatomic) CGFloat chartMarginBottom;
-
-// x轴是否可以滚动
-@property (nonatomic) BOOL isXAxisScrollable;
 
 /**
  * Controls whether to show the coordinate axis. Default is NO.

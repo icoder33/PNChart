@@ -47,19 +47,19 @@
         // 自己定义的
         // 是否显示y轴的值
         self.lineChart.showLabel = YES;
-        self.lineChart.showSmoothLines = YES;
+//        self.lineChart.showSmoothLines = YES;
         self.lineChart.showXGridLines = YES;
-        self.lineChart.fixedXIndicatorLine = 137;
-
+        self.lineChart.fixedXIndicatorLine = 150;
+        self.lineChart.chartMarginRight = 0;
 
         [self.lineChart setYLabels:@[
-            @"0 min",
             @"50 min",
             @"100 min",
             @"150 min",
             @"200 min",
             @"250 min",
             @"300 min",
+            @"350 min",
             ]
          ];
         
@@ -117,13 +117,13 @@
 
         [self.view addSubview:self.lineChart];
 
-        self.lineChart.legendStyle = PNLegendItemStyleStacked;
-        self.lineChart.legendFont = [UIFont boldSystemFontOfSize:12.0f];
-        self.lineChart.legendFontColor = [UIColor redColor];
-        
-        UIView *legend = [self.lineChart getLegendWithMaxWidth:320];
-        [legend setFrame:CGRectMake(30, 340, legend.frame.size.width, legend.frame.size.width)];
-        [self.view addSubview:legend];
+//        self.lineChart.legendStyle = PNLegendItemStyleStacked;
+//        self.lineChart.legendFont = [UIFont boldSystemFontOfSize:12.0f];
+//        self.lineChart.legendFontColor = [UIColor redColor];
+//        
+//        UIView *legend = [self.lineChart getLegendWithMaxWidth:320];
+//        [legend setFrame:CGRectMake(30, 340, legend.frame.size.width, legend.frame.size.width)];
+//        [self.view addSubview:legend];
     }
     else if ([self.title isEqualToString:@"Bar Chart"])
     {

@@ -56,9 +56,10 @@
     if (self) {
         [self setupDefaultValues];
         
-        self.isXAxisScrollable = YES;
-        self.scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(40, 0, frame.size.width, frame.size.height)];
+        self.scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(self.chartMarginLeft, 0, self.chartCavanWidth, frame.size.height)];
+        self.scrollView.backgroundColor = [UIColor clearColor];
         self.scrollView.showsHorizontalScrollIndicator = NO;
+        self.scrollView.bounces = NO;
         self.scrollView.contentSize = CGSizeMake(frame.size.width + 100, frame.size.height);
         [self addSubview:self.scrollView];
     }
@@ -121,7 +122,7 @@
     _showGenYLabels = NO;
     
     //y轴数据个数减1
-    _yLabelNum = yLabels.count - 1;
+    _yLabelNum = yLabels.count;
 
     CGFloat yLabelHeight;
     if (_showLabel) {
@@ -153,7 +154,7 @@
         for (int index = 0; index < yLabels.count; index++) {
             labelText = yLabels[index];
 
-            NSInteger y = (NSInteger) (_chartCavanHeight - index * yStepHeight);
+            NSInteger y = (NSInteger) (_chartCavanHeight - (index + 1) * yStepHeight - yStepHeight / 2.0);
 
             PNChartLabel *label = [[PNChartLabel alloc] initWithFrame:CGRectMake(0.0, y, (NSInteger) _chartMarginLeft * 0.9, (NSInteger) _yLabelHeight)];
             [label setTextAlignment:NSTextAlignmentRight];
@@ -207,18 +208,14 @@
         for (int index = 0; index < xLabels.count; index++) {
             labelText = xLabels[index];
 
-            NSInteger x = (index * _xLabelWidth + _chartMarginLeft + _xLabelWidth / 2.0);
-            NSInteger y = _chartMarginBottom + _chartCavanHeight;
+            NSInteger x = ((index) * _xLabelWidth + _xLabelWidth / 2.0);
+            NSInteger y =  _chartCavanHeight;
 
             PNChartLabel *label = [[PNChartLabel alloc] initWithFrame:CGRectMake(x, y, (NSInteger) _xLabelWidth, (NSInteger) _chartMarginBottom)];
             [label setTextAlignment:NSTextAlignmentCenter];
             label.text = labelText;
             [self setCustomStyleForXLabel:label];
-            if (self.isXAxisScrollable) {
-                [self.scrollView addSubview:label];
-            } else {
-                [self addSubview:label];
-            }
+            [self.scrollView addSubview:label];
             
             [_xChartLabels addObject:label];
         }
@@ -404,7 +401,7 @@
             [self.scrollView.layer addSublayer:xGridLineShapeLayer];
             
             UIBezierPath *xGridLinePath = [UIBezierPath bezierPath];
-            CGPoint point = CGPointMake(self.fixedXIndicatorLine, self.chartMarginBottom + self.chartCavanHeight);
+            CGPoint point = CGPointMake(self.fixedXIndicatorLine, self.chartCavanHeight);
             [xGridLinePath moveToPoint:point];
             [xGridLinePath addLineToPoint:CGPointMake(point.x, 0)];
             xGridLineShapeLayer.path = xGridLinePath.CGPath;
@@ -459,9 +456,9 @@
                 innerGrade = (yValue - _yValueMin) / (_yValueMax - _yValueMin);
             }
 
-            int x = i * _xLabelWidth + _chartMarginLeft + _xLabelWidth / 2.0;
+            int x = (i + 1) * self.xLabelWidth;
 
-            int y = _chartCavanHeight - (innerGrade * _chartCavanHeight) + (_yLabelHeight / 2) + _chartMarginTop - _chartMarginBottom;
+            int y = _chartCavanHeight - (innerGrade * _chartCavanHeight);
 
             // Circular point
             if (chartData.inflexionPointStyle == PNLineChartPointStyleCircle) {
@@ -479,7 +476,6 @@
 
                 // 从第二个点开始算
                 if (i > 0) {
-
                     // calculate the point for line
                     float distance = sqrt(pow(x - last_x, 2) + pow(y - last_y, 2));
                     float last_x1 = last_x + (inflexionWidth / 2) / distance * (x - last_x);
@@ -586,8 +582,9 @@
                 scopeInnerGrade = (scopeYValue - _yValueMin) / (_yValueMax - _yValueMin);
             }
             
-            int x = i * _xLabelWidth + _chartMarginLeft + _xLabelWidth / 2.0;
-            int y = _chartCavanHeight - (scopeInnerGrade * _chartCavanHeight) + (_yLabelHeight / 2) + _chartMarginTop - _chartMarginBottom;
+            int x = (i + 1) * self.xLabelWidth;
+            int y = _chartCavanHeight - (scopeInnerGrade * _chartCavanHeight);
+            
             if (i == 0) {
                 [scopePath moveToPoint:CGPointMake(x, y)];
                 originPoint = CGPointMake(x, y);
@@ -604,21 +601,12 @@
                 scopeInnerGrade = (scopeYValue - _yValueMin) / (_yValueMax - _yValueMin);
             }
             
-            int x = i * _xLabelWidth + _chartMarginLeft + _xLabelWidth / 2.0;
-            int y = _chartCavanHeight - (scopeInnerGrade * _chartCavanHeight) + (_yLabelHeight / 2) + _chartMarginTop - _chartMarginBottom;
+            int x = (i + 1) * self.xLabelWidth;
+            int y = _chartCavanHeight - (scopeInnerGrade * _chartCavanHeight);
             
-            if (i == 0) {
-                [scopePath addLineToPoint:originPoint];
-            } else {
-                [scopePath addLineToPoint:CGPointMake(x, y)];
-            }
+            [scopePath addLineToPoint:CGPointMake(x, y)];
         }
-        
-        
-//        [scopePath moveToPoint:CGPointMake(20, 20)];
-//        [scopePath addLineToPoint:CGPointMake(self.frame.size.width - 40, 20)];
-//        [scopePath addLineToPoint:CGPointMake(self.frame.size.width / 2, self.frame.size.height - 20)];
-//        [scopePath closePath];
+        [scopePath closePath];
 
         // 设置画笔颜色
         UIColor *strokeColor = [UIColor blueColor];
@@ -679,11 +667,7 @@
             scopeShapeLayer.lineCap = kCALineCapButt;
             scopeShapeLayer.lineJoin = kCALineJoinBevel;
             
-            if (self.isXAxisScrollable) {
-                [self.scrollView.layer addSublayer:scopeShapeLayer];
-            } else {
-                [self.layer addSublayer:scopeShapeLayer];
-            }
+            [self.scrollView.layer addSublayer:scopeShapeLayer];
             
             [self.chartScopeArray addObject:scopeShapeLayer];
             
@@ -695,11 +679,7 @@
             chartLine.lineWidth = chartData.lineWidth;
             chartLine.strokeEnd = 0.0;
             
-            if (self.isXAxisScrollable) {
-                [self.scrollView.layer addSublayer:chartLine];
-            } else {
-                [self.layer addSublayer:chartLine];
-            }
+            [self.scrollView.layer addSublayer:chartLine];
             
             [self.chartLineArray addObject:chartLine];
 
@@ -711,11 +691,7 @@
             pointLayer.fillColor = nil;
             pointLayer.lineWidth = chartData.lineWidth;
             
-            if (self.isXAxisScrollable) {
-                [self.scrollView.layer addSublayer:pointLayer];
-            } else {
-                [self.layer addSublayer:pointLayer];
-            }
+            [self.scrollView.layer addSublayer:pointLayer];
             
             [self.chartPointArray addObject:pointLayer];
         }
@@ -821,87 +797,90 @@
 
 - (void)drawRect:(CGRect)rect {
     if (self.isShowCoordinateAxis) {
-        CGFloat yAxisOffset = 10.f;
-
         CGContextRef ctx = UIGraphicsGetCurrentContext();
         UIGraphicsPushContext(ctx);
         CGContextSetLineWidth(ctx, self.axisWidth);
         CGContextSetStrokeColorWithColor(ctx, [self.axisColor CGColor]);
-
-        // x轴的宽度
-        CGFloat xAxisWidth = CGRectGetWidth(rect) - (_chartMarginLeft + _chartMarginRight) / 2;
-        // y轴的高度
-        CGFloat yAxisHeight = _chartMarginBottom + _chartCavanHeight;
-
+        
         // draw coordinate axis
-        CGContextMoveToPoint(ctx, _chartMarginBottom + yAxisOffset, 0);
-        CGContextAddLineToPoint(ctx, _chartMarginBottom + yAxisOffset, yAxisHeight);
-        CGContextAddLineToPoint(ctx, xAxisWidth, yAxisHeight);
+        CGContextMoveToPoint(ctx, self.chartMarginLeft, 0);
+        CGContextAddLineToPoint(ctx, self.chartMarginLeft, self.chartCavanHeight);
+        CGContextAddLineToPoint(ctx, self.chartMarginLeft + self.chartCavanWidth, self.chartCavanHeight);
         CGContextStrokePath(ctx);
 
-        // draw y axis arrow
-        CGContextMoveToPoint(ctx, _chartMarginBottom + yAxisOffset - 3, 6);
-        CGContextAddLineToPoint(ctx, _chartMarginBottom + yAxisOffset, 0);
-        CGContextAddLineToPoint(ctx, _chartMarginBottom + yAxisOffset + 3, 6);
-        CGContextStrokePath(ctx);
+//        // draw y axis arrow
+//        if (self.showYAxisArrow) {
+//            CGContextMoveToPoint(ctx, _chartMarginBottom - 3, 6);
+//            CGContextAddLineToPoint(ctx, _chartMarginBottom, 0);
+//            CGContextAddLineToPoint(ctx, _chartMarginBottom + 3, 6);
+//            CGContextStrokePath(ctx);
+//        }
+//        
+//        // draw x axis arrow
+//        if (self.showXAxisArrow) {
+//            CGContextMoveToPoint(ctx, xAxisWidth - 6, yAxisHeight - 3);
+//            CGContextAddLineToPoint(ctx, xAxisWidth, yAxisHeight);
+//            CGContextAddLineToPoint(ctx, xAxisWidth - 6, yAxisHeight + 3);
+//            CGContextStrokePath(ctx);
+//        }
+        
+//        if (self.showLabel) {
+//            CGPoint point;
+//            // draw x axis separator
+//            if (self.showXAxisSeparator) {
+//                for (NSUInteger i = 0; i < [self.xLabels count]; i++) {
+//                    point = CGPointMake(2 * _chartMarginLeft + (i * _xLabelWidth), _chartMarginBottom + _chartCavanHeight);
+//                    CGContextMoveToPoint(ctx, point.x, point.y - 2);
+//                    CGContextAddLineToPoint(ctx, point.x, point.y);
+//                    CGContextStrokePath(ctx);
+//                }
+//            }
+//            
+//            if (self.showYAxisSeparator) {
+//                // draw y axis separator
+//                CGFloat yStepHeight = _chartCavanHeight / _yLabelNum;
+//                for (NSUInteger i = 0; i < [self.xLabels count]; i++) {
+//                    point = CGPointMake(_chartMarginBottom, (_chartCavanHeight - i * yStepHeight + _yLabelHeight / 2));
+//                    CGContextMoveToPoint(ctx, point.x, point.y);
+//                    CGContextAddLineToPoint(ctx, point.x + 2, point.y);
+//                    CGContextStrokePath(ctx);
+//                }
+//            }
+//        }
 
-        // draw x axis arrow
-        CGContextMoveToPoint(ctx, xAxisWidth - 6, yAxisHeight - 3);
-        CGContextAddLineToPoint(ctx, xAxisWidth, yAxisHeight);
-        CGContextAddLineToPoint(ctx, xAxisWidth - 6, yAxisHeight + 3);
-        CGContextStrokePath(ctx);
-
-        if (self.showLabel) {
-
-            // draw x axis separator
-            CGPoint point;
-            for (NSUInteger i = 0; i < [self.xLabels count]; i++) {
-                point = CGPointMake(2 * _chartMarginLeft + (i * _xLabelWidth), _chartMarginBottom + _chartCavanHeight);
-                CGContextMoveToPoint(ctx, point.x, point.y - 2);
-                CGContextAddLineToPoint(ctx, point.x, point.y);
-                CGContextStrokePath(ctx);
-            }
-
-            // draw y axis separator
-            CGFloat yStepHeight = _chartCavanHeight / _yLabelNum;
-            for (NSUInteger i = 0; i < [self.xLabels count]; i++) {
-                point = CGPointMake(_chartMarginBottom + yAxisOffset, (_chartCavanHeight - i * yStepHeight + _yLabelHeight / 2));
-                CGContextMoveToPoint(ctx, point.x, point.y);
-                CGContextAddLineToPoint(ctx, point.x + 2, point.y);
-                CGContextStrokePath(ctx);
-            }
-        }
-
-        UIFont *font = [UIFont systemFontOfSize:11];
-
-        // draw y unit
-        if ([self.yUnit length]) {
-            CGFloat height = [PNLineChart sizeOfString:self.yUnit withWidth:30.f font:font].height;
-            CGRect drawRect = CGRectMake(_chartMarginLeft + 10 + 5, 0, 30.f, height);
-            [self drawTextInContext:ctx text:self.yUnit inRect:drawRect font:font];
-        }
-
-        // draw x unit
-        if ([self.xUnit length]) {
-            CGFloat height = [PNLineChart sizeOfString:self.xUnit withWidth:30.f font:font].height;
-            CGRect drawRect = CGRectMake(CGRectGetWidth(rect) - _chartMarginLeft + 5, _chartMarginBottom + _chartCavanHeight - height / 2, 25.f, height);
-            [self drawTextInContext:ctx text:self.xUnit inRect:drawRect font:font];
-        }
+//        UIFont *font = [UIFont systemFontOfSize:11];
+//
+//        // draw y unit
+//        if ([self.yUnit length]) {
+//            CGFloat height = [PNLineChart sizeOfString:self.yUnit withWidth:30.f font:font].height;
+//            CGRect drawRect = CGRectMake(_chartMarginLeft + 10 + 5, 0, 30.f, height);
+//            [self drawTextInContext:ctx text:self.yUnit inRect:drawRect font:font];
+//        }
+//
+//        // draw x unit
+//        if ([self.xUnit length]) {
+//            CGFloat height = [PNLineChart sizeOfString:self.xUnit withWidth:30.f font:font].height;
+//            CGRect drawRect = CGRectMake(CGRectGetWidth(rect) - _chartMarginLeft + 5, _chartMarginBottom + _chartCavanHeight - height / 2, 25.f, height);
+//            [self drawTextInContext:ctx text:self.xUnit inRect:drawRect font:font];
+//        }
     }
+    
     // 画y轴分割线
     if (self.showYGridLines) {
         CGContextRef ctx = UIGraphicsGetCurrentContext();
-        // y轴分割线的x坐标向右偏移的大小
-        CGFloat yAxisOffset = _showLabel ? 10.f : 0.0f;
         CGPoint point;
-        CGFloat yStepHeight = _chartCavanHeight / _yLabelNum;
+        CGFloat yLabelCount = self.yLabels.count;
+        // y轴的高度
+        CGFloat yStepHeight = self.chartCavanHeight / yLabelCount;
         if (self.yGridLinesColor) {
             CGContextSetStrokeColorWithColor(ctx, self.yGridLinesColor.CGColor);
         } else {
             CGContextSetStrokeColorWithColor(ctx, [UIColor lightGrayColor].CGColor);
         }
-        for (NSUInteger i = 0; i < _yLabelNum; i++) {
-            point = CGPointMake(_chartMarginLeft + yAxisOffset, (_chartCavanHeight - i * yStepHeight + _yLabelHeight / 2));
+
+        for (NSUInteger i = 0; i < yLabelCount; i++) {
+            CGFloat yPos = self.chartCavanHeight - (i + 1) * yStepHeight;
+            point = CGPointMake(self.chartMarginLeft, yPos);
             CGContextMoveToPoint(ctx, point.x, point.y);
             // add dotted style grid
             if (self.isYGridLinesDash) {
@@ -912,7 +891,7 @@
             // dot diameter is 20 points
             CGContextSetLineWidth(ctx, 0.5);
             CGContextSetLineCap(ctx, kCGLineCapRound);
-            CGContextAddLineToPoint(ctx, CGRectGetWidth(rect) - _chartMarginLeft + 5, point.y);
+            CGContextAddLineToPoint(ctx, self.chartMarginLeft + self.chartCavanWidth, point.y);
             CGContextStrokePath(ctx);
         }
     }
@@ -928,7 +907,9 @@
             [self.scrollView.layer addSublayer:xGridLineShapeLayer];
             
             UIBezierPath *xGridLinePath = [UIBezierPath bezierPath];
-            CGPoint point = CGPointMake(2 * self.chartMarginLeft + (i * self.xLabelWidth), self.chartMarginBottom + self.chartCavanHeight);
+            CGFloat xPos = (i + 1) * self.xLabelWidth;
+            CGFloat yPos = self.chartCavanHeight;
+            CGPoint point = CGPointMake(xPos, yPos);
             [xGridLinePath moveToPoint:point];
             [xGridLinePath addLineToPoint:CGPointMake(point.x, 0)];
             xGridLineShapeLayer.path = xGridLinePath.CGPath;
@@ -944,7 +925,7 @@
     [super setupDefaultValues];
     // Initialization code
     self.backgroundColor = [UIColor whiteColor];
-    self.clipsToBounds = YES;
+//    self.clipsToBounds = YES;
     self.chartLineArray = [NSMutableArray new];
     self.chartScopeArray = [NSMutableArray new];
     _showLabel = YES;
@@ -958,19 +939,16 @@
     _yLabelNum = 5.0;
     _yLabelHeight = [[[[PNChartLabel alloc] init] font] pointSize];
 
-//    _chartMargin = 40;
-
     _chartMarginLeft = 25.0;
     _chartMarginRight = 25.0;
-    _chartMarginTop = 25.0;
     _chartMarginBottom = 25.0;
 
     _yLabelFormat = @"%1.f";
 
     // 图表去除左右两边间距的宽
     _chartCavanWidth = self.frame.size.width - _chartMarginLeft - _chartMarginRight;
-    // 图表去除上下间距的高
-    _chartCavanHeight = self.frame.size.height - _chartMarginBottom - _chartMarginTop;
+    // 图表去除底部间距的高
+    _chartCavanHeight = self.frame.size.height - _chartMarginBottom;
 
     // Coordinate Axis Default Values
     _showCoordinateAxis = NO;
