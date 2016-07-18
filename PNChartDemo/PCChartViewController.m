@@ -31,7 +31,7 @@
         self.lineChart = [[PNLineChart alloc] initWithFrame:CGRectMake(0, 135.0, SCREEN_WIDTH, 200.0)];
         self.lineChart.yLabelFormat = @"%1.1f";
         self.lineChart.backgroundColor = [UIColor clearColor];
-        [self.lineChart setXLabels:@[@"SEP 1",@"SEP 2",@"SEP 3",@"SEP 4",@"SEP 5",@"SEP 6",@"SEP 7"]];
+        [self.lineChart setXLabels:@[@"SEP 1",@"SEP 2",@"SEP 3",@"SEP 4",@"SEP 5",@"SEP 6",@"SEP 7", @"SEP 8"]];
         self.lineChart.showCoordinateAxis = YES;
 
         // added an examle to show how yGridLines can be enabled
@@ -41,7 +41,7 @@
         
         //Use yFixedValueMax and yFixedValueMin to Fix the Max and Min Y Value
         //Only if you needed
-        self.lineChart.yFixedValueMax = 300.0;
+        self.lineChart.yFixedValueMax = 350.0;
         self.lineChart.yFixedValueMin = 0.0;
         
         // 自己定义的
