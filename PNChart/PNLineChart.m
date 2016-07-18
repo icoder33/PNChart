@@ -59,6 +59,7 @@
         self.scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(self.chartMarginLeft, 0, self.chartCavanWidth, frame.size.height)];
         self.scrollView.backgroundColor = [UIColor clearColor];
         self.scrollView.showsHorizontalScrollIndicator = NO;
+        self.scrollView.showsVerticalScrollIndicator = NO;
         self.scrollView.bounces = NO;
         self.scrollView.contentSize = CGSizeMake(frame.size.width + 100, frame.size.height);
         [self addSubview:self.scrollView];
@@ -184,9 +185,16 @@
 
     if (_showLabel) {
         xLabelWidth = _chartCavanWidth / [xLabels count];
+        if (xLabelWidth < self.xLabelWidth) {
+            xLabelWidth = self.xLabelWidth;
+        }
     } else {
         xLabelWidth = (self.frame.size.width - _chartMarginLeft - _chartMarginRight) / [xLabels count];
     }
+    
+    CGFloat width = (xLabels.count + 1) * xLabelWidth;
+    
+    self.scrollView.contentSize = CGSizeMake(width, CGRectGetHeight(self.frame));
 
     return [self setXLabels:xLabels withWidth:xLabelWidth];
 }
@@ -933,6 +941,8 @@
     _pathPoints = [[NSMutableArray alloc] init];
     _endPointsOfPath = [[NSMutableArray alloc] init];
     self.userInteractionEnabled = YES;
+    
+    self.xLabelWidth = 46;
 
     _yFixedValueMin = -FLT_MAX;
     _yFixedValueMax = -FLT_MAX;
