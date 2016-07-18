@@ -770,10 +770,14 @@
 
         CAShapeLayer *chartLine = (CAShapeLayer *) self.chartLineArray[lineIndex];
         CAShapeLayer *pointLayer = (CAShapeLayer *) self.chartPointArray[lineIndex];
+        // 范围CAShapeLayer
+        CAShapeLayer *scopeShapeLayer = (CAShapeLayer *)self.chartScopeArray[lineIndex];
 
 
         UIBezierPath *progressline = [_chartPath objectAtIndex:lineIndex];
         UIBezierPath *pointPath = [_pointPath objectAtIndex:lineIndex];
+        // 范围路径
+        UIBezierPath *scopePath = self.scopePathArray[lineIndex];
 
 
         CABasicAnimation *pathAnimation = [CABasicAnimation animationWithKeyPath:@"path"];
@@ -795,8 +799,7 @@
 
         chartLine.path = progressline.CGPath;
         pointLayer.path = pointPath.CGPath;
-
-
+        scopeShapeLayer.path = scopePath.CGPath;
     }
 
 }
