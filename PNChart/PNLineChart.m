@@ -911,7 +911,12 @@
             xGridLineShapeLayer.lineCap = kCALineCapButt;
             xGridLineShapeLayer.lineJoin = kCALineJoinBevel;
             xGridLineShapeLayer.lineWidth = 0.5;
-            xGridLineShapeLayer.strokeColor = [UIColor redColor].CGColor;
+            if (self.xGridLinesColor) {
+                xGridLineShapeLayer.strokeColor = self.xGridLinesColor.CGColor;
+            } else {
+                xGridLineShapeLayer.strokeColor = [UIColor lightGrayColor].CGColor;
+            }
+            
             [self.scrollView.layer addSublayer:xGridLineShapeLayer];
             
             UIBezierPath *xGridLinePath = [UIBezierPath bezierPath];

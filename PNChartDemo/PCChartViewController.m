@@ -37,6 +37,7 @@
         // added an examle to show how yGridLines can be enabled
         // the color is set to clearColor so that the demo remains the same
         self.lineChart.yGridLinesColor = [UIColor redColor];
+        self.lineChart.xGridLinesColor = [UIColor redColor];
         self.lineChart.showYGridLines = YES;
         
         //Use yFixedValueMax and yFixedValueMin to Fix the Max and Min Y Value
