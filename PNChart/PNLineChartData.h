@@ -25,6 +25,8 @@ typedef PNLineChartDataItem *(^LCLineChartDataGetter)(NSUInteger item);
 @property (copy) LCLineChartDataGetter getData;
 // 得到范围的block
 @property (nonatomic, copy) LCLineChartDataGetter getScope;
+//得到x的block
+@property (nonatomic, copy) LCLineChartDataGetter getXData;
 // 范围数据个数，最小和最大为一个数据
 @property (nonatomic) NSUInteger scopeCount;
 @property (strong, nonatomic) NSString *dataTitle;

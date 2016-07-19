@@ -175,8 +175,8 @@
     } else {
         xLabelWidth = (self.frame.size.width) / [xLabels count];
     }
-
-    return xLabelWidth;
+     
+    return 10;
 }
 
 
@@ -191,7 +191,7 @@
     } else {
         xLabelWidth = (self.frame.size.width - _chartMarginLeft - _chartMarginRight) / [xLabels count];
     }
-    
+    xLabelWidth = 10;
     CGFloat width = (xLabels.count + 1) * xLabelWidth;
     
     self.scrollView.contentSize = CGSizeMake(width, CGRectGetHeight(self.frame));
@@ -429,8 +429,8 @@
     for (NSUInteger lineIndex = 0; lineIndex < self.chartData.count; lineIndex++) {
         PNLineChartData *chartData = self.chartData[lineIndex];
 
-        CGFloat yValue;
-        CGFloat innerGrade;
+        CGFloat yValue,xValue;
+        CGFloat innerGrade,innerGradeX;
         // 线贝塞尔曲线
         UIBezierPath *progressline = [UIBezierPath bezierPath];
         // 转折点贝塞尔曲线
@@ -463,9 +463,15 @@
             } else {
                 innerGrade = (yValue - _yValueMin) / (_yValueMax - _yValueMin);
             }
-
-            int x = (i + 1) * self.xLabelWidth;
-
+            
+            xValue = chartData.getXData(i).x;
+            if (!(_xValueMax - _xValueMin)) {
+                innerGradeX = 0.5;
+            } else {
+                innerGradeX = (xValue - _xValueMin) / (_xValueMax - _xValueMin);
+            }
+            //int x = (i + 1) * self.xLabelWidth;
+            int x = self.scrollView.contentSize.width * innerGradeX;
             int y = _chartCavanHeight - (innerGrade * _chartCavanHeight);
 
             // Circular point
@@ -571,16 +577,19 @@
         // 绘制范围路径
         NSMutableArray *minYArray = [NSMutableArray array];
         NSMutableArray *maxYArray = [NSMutableArray array];
+        NSMutableArray *xArray = [NSMutableArray array];
         for (NSUInteger i = 0; i < chartData.scopeCount; i++) {
             PNLineChartDataItem *dataItem = chartData.getScope(i);
             NSNumber *minY = @(dataItem.minY);
             NSNumber *maxY = @(dataItem.maxY);
+            NSNumber *x = @(dataItem.rangeX);
             [minYArray addObject:minY];
             [maxYArray addObject:maxY];
+            [xArray addObject:x];
         }
         
-        CGFloat scopeInnerGrade;
-        CGFloat scopeYValue;
+        CGFloat scopeInnerGrade,scopeInnerGradeX;
+        CGFloat scopeYValue,scopeXValue;
         CGPoint originPoint;
         for (NSUInteger i = 0; i < minYArray.count; i++) {
             scopeYValue = [minYArray[i] doubleValue];
@@ -589,8 +598,13 @@
             } else {
                 scopeInnerGrade = (scopeYValue - _yValueMin) / (_yValueMax - _yValueMin);
             }
-            
-            int x = (i + 1) * self.xLabelWidth;
+            scopeXValue = [xArray[i] doubleValue];
+            if (!(_xValueMax- _xValueMin)) {
+                scopeInnerGradeX = 0.5;
+            } else {
+                scopeInnerGradeX = (scopeYValue - _xValueMin) / (_yValueMax - _xValueMin);
+            }
+            int x = _chartCavanWidth * scopeInnerGradeX;
             int y = _chartCavanHeight - (scopeInnerGrade * _chartCavanHeight);
             
             if (i == 0) {
@@ -608,8 +622,13 @@
             } else {
                 scopeInnerGrade = (scopeYValue - _yValueMin) / (_yValueMax - _yValueMin);
             }
-            
-            int x = (i + 1) * self.xLabelWidth;
+            scopeXValue = [xArray[i] doubleValue];
+            if (!(_xValueMax- _xValueMin)) {
+                scopeInnerGradeX = 0.5;
+            } else {
+                scopeInnerGradeX = (scopeYValue - _xValueMin) / (_yValueMax - _xValueMin);
+            }
+            int x = _chartCavanWidth * scopeInnerGradeX;
             int y = _chartCavanHeight - (scopeInnerGrade * _chartCavanHeight);
             
             [scopePath addLineToPoint:CGPointMake(x, y)];
@@ -714,6 +733,7 @@
         if (!_showLabel) {
             _chartCavanHeight = self.frame.size.height - 2 * _yLabelHeight;
             _chartCavanWidth = self.frame.size.width;
+            _chartCavanWidth = self.scrollView.contentSize.width;
             //_chartMargin = chartData.inflexionPointWidth;
             _xLabelWidth = (_chartCavanWidth / ([_xLabels count]));
         }

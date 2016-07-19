@@ -48,6 +48,9 @@
 @property (nonatomic) CGFloat yLabelHeight;
 @property (nonatomic) UIFont *yLabelFont;
 @property (nonatomic) UIColor *yLabelColor;
+@property (nonatomic) CGFloat xValueMin;
+@property (nonatomic) CGFloat xValueMax;
+
 // 是否显示y轴的箭头
 @property (nonatomic) BOOL showYAxisArrow;
 // 是否显示y轴的刻度点
@@ -85,6 +88,10 @@
 
 @property (nonatomic, strong) NSString *xUnit;
 @property (nonatomic, strong) NSString *yUnit;
+
+// 单位高度和宽度
+@property (nonatomic, assign) CGFloat stepHeight;
+@property (nonatomic, assign) CGFloat stepWidth;
 
 /**
  * String formatter for float values in y-axis labels. If not set, defaults to @"%1.f"
