@@ -32,7 +32,7 @@
         self.lineChart.yLabelFormat = @"%1.1f";
         self.lineChart.backgroundColor = [UIColor clearColor];
         NSArray *array = @[@"SEP 1",@"SEP 2",@"SEP 3",@"SEP 4",@"SEP 5",@"SEP 6",@"SEP 7", @"SEP 8"];
-        [self.lineChart setXLabels:@[@"SEP 1",@"SEP 2",@"SEP 3",@"SEP 4",@"SEP 5",@"SEP 6",@"SEP 7", @"SEP 8"]];
+        [self.lineChart setXLabels:@[@"0",@"50",@"100",@"150",@"200",@"300",@"350", @"400"]];
         self.lineChart.showCoordinateAxis = YES;
 
         // added an examle to show how yGridLines can be enabled
@@ -44,8 +44,8 @@
         //Use yFixedValueMax and yFixedValueMin to Fix the Max and Min Y Value
         //Only if you needed
         self.lineChart.yFixedValueMax = 350.0;
-        self.lineChart.yFixedValueMin = 30.0;
-        self.lineChart.xValueMax = 350;
+        self.lineChart.yFixedValueMin = 0;
+        self.lineChart.xValueMax = 400;
         self.lineChart.xValueMin = 0.0;
         
         // 自己定义的
@@ -105,14 +105,14 @@
                                 @"maxY": @180};
         
                                 
-        NSArray *scope2Array = @[dict1, dict2, dict3, dict4];
-        data02.scopeCount = scope2Array.count;
-        data02.getScope = ^(NSUInteger index) {
-            NSDictionary *dict = scope2Array[index];
-            CGFloat minY = [dict[@"minY"] doubleValue];
-            CGFloat maxY = [dict[@"maxY"] doubleValue];
-            return [PNLineChartDataItem dateItemWithMinY:minY andMaxY:maxY];
-        };
+//        NSArray *scope2Array = @[dict1, dict2, dict3, dict4];
+//        data02.scopeCount = scope2Array.count;
+//        data02.getScope = ^(NSUInteger index) {
+//            NSDictionary *dict = scope2Array[index];
+//            CGFloat minY = [dict[@"minY"] doubleValue];
+//            CGFloat maxY = [dict[@"maxY"] doubleValue];
+//            return [PNLineChartDataItem dateItemWithMinY:minY andMaxY:maxY ];
+//        };
         
         NSArray *xArray = @[@30.0, @80.1, @96.4, @102.2, @126.2, @167.2, @276.2];
         data02.getXData = ^(NSUInteger index){
